@@ -8,6 +8,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Optional;
 
 import butterknife.BindView;
@@ -37,6 +41,37 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(src, (int) newWidth, (int) newHeight, false);
     }
 
+    private File writeToFile(Bitmap bitmap) {
+        //create a file to write bitmap data
+        final String FILE_NAME = "scaled";
+        File f = new File(getCacheDir(), FILE_NAME);
+        try {
+            f.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+//Convert bitmap to byte array
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+        byte[] bitmapdata = bos.toByteArray();
+
+//write the bytes in file
+
+        try {
+            FileOutputStream fos = new FileOutputStream(f);
+            fos.write(bitmapdata);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return f;
+    }
+
     @OnClick(R.id.fab) void fab(View view) {
         Bitmap placeholder = BitmapFactory.decodeResource(getResources(),R.drawable.img);
 
@@ -49,7 +84,12 @@ public class MainActivity extends AppCompatActivity {
                 MAX_WIDTH,
                 MAX_HEIGHT);
 
-        imageView.setImageBitmap(scaled);
+        File scaledFile = writeToFile(scaled);
+        assert scaledFile != null;
+        String path = scaledFile.getAbsolutePath();
+        Bitmap reopened = BitmapFactory.decodeFile(path);
+
+        imageView.setImageBitmap(reopened);
     }
 
     @Override
